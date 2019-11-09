@@ -36,7 +36,7 @@ public class DemoTask implements ITaskHandler {
 
     @Override
     public String execute(String params) {
-        // your business logic gos here
+        // your business logic goes here
         return "success";
     }
 }
