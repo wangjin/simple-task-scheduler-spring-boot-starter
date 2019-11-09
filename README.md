@@ -28,3 +28,16 @@ spring.redis.pool.min-idle=0
 # 连接超时时间（毫秒）
 spring.redis.timeout=0
 ```
+
+创建Task
+```java
+@TaskHandler("demoTask")
+public class DemoTask implements ITaskHandler {
+
+    @Override
+    public String execute(String params) {
+        // your business logic gos here
+        return "success";
+    }
+}
+```
