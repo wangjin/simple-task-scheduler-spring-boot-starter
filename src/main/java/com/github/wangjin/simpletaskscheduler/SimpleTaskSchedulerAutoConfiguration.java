@@ -4,6 +4,7 @@ import com.github.wangjin.simpletaskscheduler.listener.TaskSchedulerListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -15,6 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @Configuration
 public class SimpleTaskSchedulerAutoConfiguration {
 
+    @Bean
     @ConditionalOnProperty(prefix = "simple.task.scheduler", value = "enabled", havingValue = "true")
     @ConditionalOnBean(StringRedisTemplate.class)
     TaskSchedulerListener taskSchedulerListener(ApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate) {
