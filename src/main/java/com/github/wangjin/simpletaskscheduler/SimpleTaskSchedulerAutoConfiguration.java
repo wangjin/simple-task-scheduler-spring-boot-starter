@@ -6,7 +6,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+
+import static com.github.wangjin.simpletaskscheduler.constant.Constants.TASK_SCHEDULER_CHANNEL;
 
 /**
  * @author Jin Wang
@@ -21,5 +26,13 @@ public class SimpleTaskSchedulerAutoConfiguration {
     @ConditionalOnBean(StringRedisTemplate.class)
     TaskSchedulerListener taskSchedulerListener(ApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate) {
         return new TaskSchedulerListener(applicationContext, stringRedisTemplate);
+    }
+
+    @Bean
+    RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory, TaskSchedulerListener taskSchedulerListener) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.addMessageListener(taskSchedulerListener, new ChannelTopic(TASK_SCHEDULER_CHANNEL));
+        return container;
     }
 }
