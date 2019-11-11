@@ -2,9 +2,11 @@ package com.github.wangjin.simpletaskscheduler;
 
 import com.github.wangjin.simpletaskscheduler.listener.TaskSchedulerListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +23,7 @@ import static com.github.wangjin.simpletaskscheduler.constant.Constants.TASK_SCH
  * @date 2019-11-09 10:34 下午
  */
 @Configuration
-@EnableAutoConfiguration
+@AutoConfigureAfter({RedisAutoConfiguration.class})
 public class SimpleTaskSchedulerAutoConfiguration {
 
     @Bean
