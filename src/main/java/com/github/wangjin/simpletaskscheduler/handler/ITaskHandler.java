@@ -12,6 +12,7 @@ public interface ITaskHandler {
      *
      * @param params 入参
      * @return 执行结果
+     * @throws Exception 运行异常
      */
-    String execute(String params);
+    String execute(String params) throws Exception;
 }
