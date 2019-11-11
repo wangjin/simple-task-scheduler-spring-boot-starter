@@ -9,6 +9,7 @@ package com.github.wangjin.simpletaskscheduler.listener;
 import com.alibaba.fastjson.JSONObject;
 import com.github.wangjin.simpletaskscheduler.annotation.TaskHandler;
 import com.github.wangjin.simpletaskscheduler.handler.ITaskHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
+@Slf4j
 public class TaskSchedulerListener implements MessageListener {
 
     private ApplicationContext applicationContext;
@@ -62,7 +64,11 @@ public class TaskSchedulerListener implements MessageListener {
                 }
                 ITaskHandler iTaskHandler = (ITaskHandler) beansWithAnnotation.get(taskHandlerName);
                 if (iTaskHandler != null) {
-                    String execute = iTaskHandler.execute(params);
+                    try {
+                        String execute = iTaskHandler.execute(params);
+                    } catch (Exception e) {
+                        log.error("[Simple-Task-Scheduler] interrupted by exception", e);
+                    }
                 }
             }
         }
