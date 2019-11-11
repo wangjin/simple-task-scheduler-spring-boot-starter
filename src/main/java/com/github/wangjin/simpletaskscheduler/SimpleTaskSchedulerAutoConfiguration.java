@@ -1,6 +1,8 @@
 package com.github.wangjin.simpletaskscheduler;
 
 import com.github.wangjin.simpletaskscheduler.listener.TaskSchedulerListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
@@ -19,6 +21,7 @@ import static com.github.wangjin.simpletaskscheduler.constant.Constants.TASK_SCH
  * @date 2019-11-09 10:34 下午
  */
 @Configuration
+@EnableAutoConfiguration
 public class SimpleTaskSchedulerAutoConfiguration {
 
     @Bean
