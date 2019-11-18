@@ -28,11 +28,14 @@ public class TaskSchedulerListener implements MessageListener {
 
     private StringRedisTemplate stringRedisTemplate;
 
+    private String executorName;
+
     private static final String TASK_PRE = "TASK-";
 
-    public TaskSchedulerListener(ApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate) {
+    public TaskSchedulerListener(ApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate, String executorName) {
         this.applicationContext = applicationContext;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.executorName = executorName;
     }
 
     @Override
@@ -49,6 +52,13 @@ public class TaskSchedulerListener implements MessageListener {
             boolean singleNode = jsonObject.getIntValue("isSingleNode") == 1;
             // 随机任务ID
             String randomId = jsonObject.getString("randomId");
+            // 随机任务ID
+            String executorName = jsonObject.getString("executorName");
+
+            // 配置执行器名称后，如果名称不一致，则不执行后续
+            if (!isEmpty(this.executorName) && !isEmpty(executorName) && !executorName.equals(this.executorName)) {
+                return;
+            }
 
             // 获取注解为TaskHandler的bean
             Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskHandler.class);
