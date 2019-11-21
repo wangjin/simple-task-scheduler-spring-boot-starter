@@ -15,6 +15,8 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,7 @@ public class TaskSchedulerListener implements MessageListener {
 
             // 配置执行器名称后，如果名称不一致，则不执行后续
             if (!isEmpty(this.executorName) && !isEmpty(executorName) && !executorName.equals(this.executorName)) {
+                log.warn("执行器名称未配置或不一致，配置执行器名称：{},当前执行器名称：{}", this.executorName, executorName);
                 return;
             }
 
@@ -69,6 +72,11 @@ public class TaskSchedulerListener implements MessageListener {
                     stringRedisTemplate.expire(lockName, 5, TimeUnit.SECONDS);
                     if (increment == null || increment != 1) {
                         // 未获得锁则跳过后续执行
+                        try {
+                            log.warn("当前节点[{}]未竞争到单节点锁，结束调度", InetAddress.getLocalHost().getHostName());
+                        } catch (UnknownHostException e) {
+                            log.error("获取hostname失败", e);
+                        }
                         return;
                     }
                 }
