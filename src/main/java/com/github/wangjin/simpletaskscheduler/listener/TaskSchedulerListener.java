@@ -22,12 +22,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.github.wangjin.simpletaskscheduler.constant.Constants.QICHACHA_ENTERPRISE_CRAWLER_CHANNEL;
-import static com.github.wangjin.simpletaskscheduler.constant.Constants.QICHACHA_ENTERPRISE_CRAWLER_TASK;
+import static com.github.wangjin.simpletaskscheduler.constant.Constants.TASK_RE_SCHEDULER_CHANNEL;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Slf4j
 public class TaskSchedulerListener implements MessageListener {
+
+    private static final Byte FIXED_DELAY = 2;
 
     private ApplicationContext applicationContext;
 
@@ -77,8 +78,8 @@ public class TaskSchedulerListener implements MessageListener {
                 if (iTaskHandler != null) {
                     try {
                         String execute = iTaskHandler.execute(taskScheduler.getParams());
-                        if (QICHACHA_ENTERPRISE_CRAWLER_TASK.equals(taskScheduler.getHandlerName())) {
-                            stringRedisTemplate.convertAndSend(QICHACHA_ENTERPRISE_CRAWLER_CHANNEL, JSON.toJSONString(taskScheduler));
+                        if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
+                            stringRedisTemplate.convertAndSend(TASK_RE_SCHEDULER_CHANNEL, JSON.toJSONString(taskScheduler));
                         }
                     } catch (Exception e) {
                         log.error("[Simple-Task-Scheduler] interrupted by exception", e);
