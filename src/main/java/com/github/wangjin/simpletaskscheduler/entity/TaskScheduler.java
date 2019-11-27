@@ -9,8 +9,6 @@ import lombok.Data;
  */
 @Data
 public class TaskScheduler {
-    public static final String COL_TASK_NAME = "task_name";
-    public static final String COL_TASK_BEAN_NAME = "task_bean_name";
     /**
      * 主键
      */
