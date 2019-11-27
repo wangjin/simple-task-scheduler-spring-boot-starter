@@ -8,4 +8,6 @@ package com.github.wangjin.simpletaskscheduler.constant;
 public interface Constants {
 
     String TASK_SCHEDULER_CHANNEL = "TASK_SCHEDULER_CHANNEL";
+    String QICHACHA_ENTERPRISE_CRAWLER_CHANNEL = "QICHACHA_ENTERPRISE_CRAWLER_CHANNEL";
+    String QICHACHA_ENTERPRISE_CRAWLER_TASK = "qichachaEnterpriseCrawlerTask";
 }
