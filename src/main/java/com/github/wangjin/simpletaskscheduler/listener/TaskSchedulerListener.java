@@ -79,6 +79,11 @@ public class TaskSchedulerListener implements MessageListener {
                     try {
                         String execute = iTaskHandler.execute(taskScheduler.getParams());
                         if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
+                            try {
+                                Thread.sleep(Long.parseLong(taskScheduler.getCronExpressionOrFixedDelay()));
+                            } catch (InterruptedException e) {
+                                log.error("线程休眠异常", e);
+                            }
                             stringRedisTemplate.convertAndSend(TASK_RE_SCHEDULER_CHANNEL, JSON.toJSONString(taskScheduler));
                         }
                     } catch (Exception e) {
