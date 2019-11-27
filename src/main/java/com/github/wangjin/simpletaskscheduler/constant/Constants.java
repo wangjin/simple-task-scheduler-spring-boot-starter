@@ -8,4 +8,5 @@ package com.github.wangjin.simpletaskscheduler.constant;
 public interface Constants {
 
     String TASK_SCHEDULER_CHANNEL = "TASK_SCHEDULER_CHANNEL";
+    String TASK_RE_SCHEDULER_CHANNEL = "TASK_RE_SCHEDULER_CHANNEL";
 }
