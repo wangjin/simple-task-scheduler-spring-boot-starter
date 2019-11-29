@@ -81,7 +81,7 @@ public class TaskSchedulerListener implements MessageListener {
                         long taskStart = System.currentTimeMillis();
                         String execute = iTaskHandler.execute(taskScheduler.getParams());
                         long taskEnd = System.currentTimeMillis();
-                        if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
+                        if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() != 1 && FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
                             try {
                                 Thread.sleep(Long.parseLong(taskScheduler.getCronExpressionOrFixedDelay()));
                             } catch (InterruptedException e) {
