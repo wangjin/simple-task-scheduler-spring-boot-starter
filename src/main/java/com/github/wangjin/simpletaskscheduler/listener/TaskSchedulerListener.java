@@ -37,6 +37,7 @@ public class TaskSchedulerListener implements MessageListener {
     private String executorName;
 
     private static final String TASK_PRE = "TASK-";
+    private static final String SCHEDULE_PRE = "SCHEDULE-";
 
     public TaskSchedulerListener(ApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate, String executorName) {
         this.applicationContext = applicationContext;
@@ -77,14 +78,22 @@ public class TaskSchedulerListener implements MessageListener {
                 ITaskHandler iTaskHandler = (ITaskHandler) beansWithAnnotation.get(taskScheduler.getHandlerName());
                 if (iTaskHandler != null) {
                     try {
+                        long taskStart = System.currentTimeMillis();
                         String execute = iTaskHandler.execute(taskScheduler.getParams());
+                        long taskEnd = System.currentTimeMillis();
                         if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
                             try {
                                 Thread.sleep(Long.parseLong(taskScheduler.getCronExpressionOrFixedDelay()));
                             } catch (InterruptedException e) {
                                 log.error("线程休眠异常", e);
                             }
-                            stringRedisTemplate.convertAndSend(TASK_RE_SCHEDULER_CHANNEL, JSON.toJSONString(taskScheduler));
+                            // 保证单节点重新调度
+                            String lockName = SCHEDULE_PRE + taskScheduler.getId() + ":" + taskScheduler.getRandomId();
+                            Long increment = stringRedisTemplate.opsForValue().increment(lockName);
+                            stringRedisTemplate.expire(lockName, taskEnd - taskStart, TimeUnit.MILLISECONDS);
+                            if (increment != null && increment == 1) {
+                                stringRedisTemplate.convertAndSend(TASK_RE_SCHEDULER_CHANNEL, JSON.toJSONString(taskScheduler));
+                            }
                         }
                     } catch (Exception e) {
                         log.error("[Simple-Task-Scheduler] interrupted by exception", e);
