@@ -20,6 +20,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.wangjin.simpletaskscheduler.constant.Constants.TASK_RE_SCHEDULER_CHANNEL;
@@ -92,6 +93,8 @@ public class TaskSchedulerListener implements MessageListener {
                             Long increment = stringRedisTemplate.opsForValue().increment(lockName);
                             stringRedisTemplate.expire(lockName, taskEnd - taskStart, TimeUnit.MILLISECONDS);
                             if (increment != null && increment == 1) {
+                                //重置randomId
+                                taskScheduler.setRandomId(UUID.randomUUID().toString());
                                 stringRedisTemplate.convertAndSend(TASK_RE_SCHEDULER_CHANNEL, JSON.toJSONString(taskScheduler));
                             }
                         }
