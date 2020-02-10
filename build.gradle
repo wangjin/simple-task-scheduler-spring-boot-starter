@@ -35,9 +35,10 @@ buildscript {
 plugins {
     id 'org.springframework.boot' version '2.2.0.RELEASE'
     id 'java'
+    id 'maven-publish'
 }
 
-group = 'com.hongyue'
+group = 'com.github.wangjin'
 version = '1.0.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 
@@ -58,6 +59,13 @@ test {
     useJUnitPlatform()
 }
 
+ext {
+    setProperty('snapshotUrl', 'https://repo.rdc.aliyun.com/repository/81055-snapshot-ikhbYQ/')
+    setProperty('releaseUrl', 'https://repo.rdc.aliyun.com/repository/81055-release-l7Tutl/')
+    setProperty('mavenUsername', 'mrQHCf')
+    setProperty('mavenPassword', 'qjD2qwR1CM')
+}
+
 repositories {
 
     // 开发jar包时使用，需在本地添加local.properties配置文件，并配置"jarDevMode=true"
@@ -75,16 +83,45 @@ repositories {
     }
     maven {
         credentials {
-            username 'mrQHCf'
-            password 'qjD2qwR1CM'
+            username "${mavenUsername}"
+            password "${mavenPassword}"
         }
-        url 'https://repo.rdc.aliyun.com/repository/81055-release-l7Tutl/'
+        url = version.endsWith('SNAPSHOT') ? "${snapshotUrl}" : "${releaseUrl}"
     }
-    maven {
-        credentials {
-            username 'mrQHCf'
-            password 'qjD2qwR1CM'
+}
+
+jar {
+    enabled = true
+}
+
+bootJar {
+    enabled = false
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allSource
+}
+
+publishing {
+
+    repositories {
+        mavenLocal()
+
+        maven {
+            credentials {
+                username "${mavenUsername}"
+                password "${mavenPassword}"
+            }
+            url = version.endsWith('SNAPSHOT') ? "${snapshotUrl}" : "${releaseUrl}"
         }
-        url 'https://repo.rdc.aliyun.com/repository/81055-snapshot-ikhbYQ/'
+    }
+
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact sourceJar {
+                classifier 'sources'
+            }
+        }
     }
 }
