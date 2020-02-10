@@ -65,4 +65,9 @@ public class TaskScheduler {
      */
     private String randomId;
 
+    /**
+     * 任务动作
+     */
+    private String action;
+
 }

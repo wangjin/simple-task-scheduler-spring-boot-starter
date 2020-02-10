@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -31,7 +31,7 @@ public class SimpleTaskSchedulerAutoConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "simple.task.scheduler", value = "enabled", havingValue = "true")
     @ConditionalOnBean(StringRedisTemplate.class)
-    TaskSchedulerListener taskSchedulerListener(ApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate) {
+    TaskSchedulerListener taskSchedulerListener(ConfigurableApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate) {
         return new TaskSchedulerListener(applicationContext, stringRedisTemplate, executorName);
     }
 

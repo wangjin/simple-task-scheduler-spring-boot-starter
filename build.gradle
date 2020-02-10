@@ -1,0 +1,90 @@
+buildscript {
+    configurations.all {
+        // check for updates every build
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+
+    repositories {
+
+        maven {
+            credentials {
+                username 'mrQHCf'
+                password 'qjD2qwR1CM'
+            }
+            url 'https://repo.rdc.aliyun.com/repository/81055-release-l7Tutl/'
+        }
+        maven {
+            credentials {
+                username 'mrQHCf'
+                password 'qjD2qwR1CM'
+            }
+            url 'https://repo.rdc.aliyun.com/repository/81055-snapshot-ikhbYQ/'
+        }
+
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath 'com.hongyue.parent.plugin:hongyue-parent-plugin:1.0.0-SNAPSHOT'
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.8.RELEASE"
+    }
+}
+
+plugins {
+    id 'org.springframework.boot' version '2.2.0.RELEASE'
+    id 'java'
+}
+
+group = 'com.hongyue'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+apply plugin: "io.spring.dependency-management"
+apply plugin: 'com.hongyue.parent'
+
+dependencies {
+
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'com.alibaba:fastjson'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+repositories {
+
+    // 开发jar包时使用，需在本地添加local.properties配置文件，并配置"jarDevMode=true"
+    File file = rootProject.file("local.properties")
+    if (file.exists()) {
+        Properties p = new Properties()
+        p.load(file.newDataInputStream())
+        if (p.get("jarDevMode")) {
+            mavenLocal()
+        }
+    }
+
+    maven {
+        url 'https://maven.aliyun.com/repository/public'
+    }
+    maven {
+        credentials {
+            username 'mrQHCf'
+            password 'qjD2qwR1CM'
+        }
+        url 'https://repo.rdc.aliyun.com/repository/81055-release-l7Tutl/'
+    }
+    maven {
+        credentials {
+            username 'mrQHCf'
+            password 'qjD2qwR1CM'
+        }
+        url 'https://repo.rdc.aliyun.com/repository/81055-snapshot-ikhbYQ/'
+    }
+}
