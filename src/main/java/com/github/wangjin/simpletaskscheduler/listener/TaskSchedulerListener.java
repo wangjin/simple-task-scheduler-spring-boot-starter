@@ -108,7 +108,7 @@ public class TaskSchedulerListener implements MessageListener {
                             threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
                         }
 
-                        if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() != 1) {
+                        if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() == 1) {
                             // 单次执行
                             threadPoolTaskScheduler.submit(new TaskRunnable(iTaskHandler, taskScheduler.getParams()));
                         } else if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
