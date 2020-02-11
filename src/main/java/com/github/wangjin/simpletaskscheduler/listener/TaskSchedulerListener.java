@@ -67,6 +67,7 @@ public class TaskSchedulerListener implements MessageListener {
                 // 找到并关闭对应线程池
                 ThreadPoolTaskScheduler threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
                 threadPoolTaskScheduler.shutdown();
+                ((BeanDefinitionRegistry) applicationContext.getBeanFactory()).removeBeanDefinition(theadPoolName);
             } else if (TASK_ACTION_START.equalsIgnoreCase(taskScheduler.getAction())) {
 
                 // 是否单节点任务，为true使用任务ID作为redis锁执行任务，其他跳过
