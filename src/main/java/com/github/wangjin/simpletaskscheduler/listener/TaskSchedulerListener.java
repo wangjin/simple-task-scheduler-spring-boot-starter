@@ -73,8 +73,8 @@ public class TaskSchedulerListener implements MessageListener {
                 // 是否单节点任务，为true使用任务ID作为redis锁执行任务，其他跳过
                 boolean singleNode = taskScheduler.getIsSingleNode() == 1;
                 // 配置执行器名称后，如果名称不一致，则不执行后续
-                if (!isEmpty(this.executorName) && !isEmpty(taskScheduler.getExecutorName()) && !taskScheduler.getExecutorName().equals(this.executorName)) {
-                    log.debug("执行器名称未配置或不一致，配置执行器名称：{},当前执行器名称：{}", this.executorName, executorName);
+                if (!isEmpty(this.executorName) && !isEmpty(taskScheduler.getExecutorName()) && !taskScheduler.getExecutorName().contains(this.executorName)) {
+                    log.debug("执行器名称未配置或不一致，配置执行器名称：{},要求执行器名称：{}", this.executorName, taskScheduler.getExecutorName());
                     return;
                 }
 
