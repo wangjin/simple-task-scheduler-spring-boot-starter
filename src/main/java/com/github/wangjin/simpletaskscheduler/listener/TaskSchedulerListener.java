@@ -66,6 +66,7 @@ public class TaskSchedulerListener implements MessageListener {
                 log.debug("关闭线程池[{}]", theadPoolName);
                 // 找到并关闭对应线程池
                 ThreadPoolTaskScheduler threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
+                threadPoolTaskScheduler.setWaitForTasksToCompleteOnShutdown(false);
                 threadPoolTaskScheduler.shutdown();
                 ((BeanDefinitionRegistry) applicationContext.getBeanFactory()).removeBeanDefinition(theadPoolName);
             } else if (TASK_ACTION_START.equalsIgnoreCase(taskScheduler.getAction())) {
@@ -107,6 +108,12 @@ public class TaskSchedulerListener implements MessageListener {
                             BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) applicationContext.getBeanFactory();
                             beanFactory.registerBeanDefinition(theadPoolName, rawBeanDefinition);
                             threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
+
+                        }
+
+                        // 当前线程池中已经有线程则不提交新任务
+                        if (threadPoolTaskScheduler.getActiveCount() > 0) {
+                            return;
                         }
 
                         if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() == 1) {
