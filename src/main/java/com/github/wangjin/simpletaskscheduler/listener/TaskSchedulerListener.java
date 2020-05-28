@@ -87,7 +87,7 @@ public class TaskSchedulerListener implements MessageListener {
                     if (singleNode) {
                         String randomId = taskScheduler.getRandomId();
                         int lockSeconds = 5;
-                        if (!ObjectUtils.isEmpty(randomId)) {
+                        if (ObjectUtils.isEmpty(randomId)) {
                             // randomId为空即为自动启动任务，防止重复执行，延迟锁时间
                             randomId = UUID.randomUUID().toString().replaceAll("-", "");
                             lockSeconds = 120;
