@@ -22,11 +22,13 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.util.ObjectUtils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.wangjin.simpletaskscheduler.constant.Constants.THEAD_POOL_POST;
@@ -83,9 +85,16 @@ public class TaskSchedulerListener implements MessageListener {
                 Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskHandler.class);
                 if (!beansWithAnnotation.isEmpty()) {
                     if (singleNode) {
-                        String lockName = TASK_PRE + taskScheduler.getId() + ":" + taskScheduler.getRandomId();
+                        String randomId = taskScheduler.getRandomId();
+                        int lockSeconds = 5;
+                        if (!ObjectUtils.isEmpty(randomId)) {
+                            // randomId为空即为自动启动任务，防止重复执行，延迟锁时间
+                            randomId = UUID.randomUUID().toString().replaceAll("-", "");
+                            lockSeconds = 120;
+                        }
+                        String lockName = TASK_PRE + taskScheduler.getId() + ":" + randomId;
                         Long increment = stringRedisTemplate.opsForValue().increment(lockName);
-                        stringRedisTemplate.expire(lockName, 5, TimeUnit.SECONDS);
+                        stringRedisTemplate.expire(lockName, lockSeconds, TimeUnit.SECONDS);
                         if (increment == null || increment != 1) {
                             // 未获得锁则跳过后续执行
                             try {
