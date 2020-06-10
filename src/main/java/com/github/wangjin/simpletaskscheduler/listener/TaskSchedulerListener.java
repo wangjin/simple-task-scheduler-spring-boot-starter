@@ -28,7 +28,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.wangjin.simpletaskscheduler.constant.Constants.THEAD_POOL_POST;
@@ -98,7 +97,7 @@ public class TaskSchedulerListener implements MessageListener {
                         if (increment == null || increment != 1) {
                             // 未获得锁则跳过后续执行
                             try {
-                                log.debug("当前节点[{}]未竞争到单节点锁，结束调度", InetAddress.getLocalHost().getHostName());
+                                log.warn("当前节点[{}]未竞争到单节点锁，结束调度[{}]", InetAddress.getLocalHost().getHostName(), taskScheduler.getName());
                             } catch (UnknownHostException e) {
                                 log.error("获取hostname失败", e);
                             }
