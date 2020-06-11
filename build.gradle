@@ -98,9 +98,6 @@ bootJar {
     enabled = false
 }
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.allSource
-}
 
 publishing {
 
@@ -119,9 +116,6 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
-            artifact sourceJar {
-                classifier 'sources'
-            }
         }
     }
 }

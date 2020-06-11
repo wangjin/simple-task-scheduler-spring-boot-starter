@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSON;
 import com.github.wangjin.simpletaskscheduler.annotation.TaskHandler;
 import com.github.wangjin.simpletaskscheduler.entity.TaskScheduler;
 import com.github.wangjin.simpletaskscheduler.handler.ITaskHandler;
+import com.github.wangjin.simpletaskscheduler.init.InitUtil;
 import com.github.wangjin.simpletaskscheduler.runnable.TaskRunnable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -27,9 +28,12 @@ import org.springframework.util.ObjectUtils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.wangjin.simpletaskscheduler.constant.Constants.SECONDS_PER_MINUTE;
 import static com.github.wangjin.simpletaskscheduler.constant.Constants.THEAD_POOL_POST;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -90,6 +94,11 @@ public class TaskSchedulerListener implements MessageListener {
                             // randomId为空即为自动启动任务，防止重复执行，延迟锁时间
                             randomId = "SINGLE_NODE_ID";
                             lockSeconds = 120;
+                            LocalDateTime initTIme = InitUtil.getInitTIme();
+                            // 初始化时间大于120秒
+                            if (isEmpty(initTIme) || Duration.between(initTIme, LocalDateTime.now()).toMinutes() * SECONDS_PER_MINUTE > lockSeconds) {
+                                return;
+                            }
                         }
                         String lockName = TASK_PRE + taskScheduler.getId() + ":" + randomId;
                         Long increment = stringRedisTemplate.opsForValue().increment(lockName);
