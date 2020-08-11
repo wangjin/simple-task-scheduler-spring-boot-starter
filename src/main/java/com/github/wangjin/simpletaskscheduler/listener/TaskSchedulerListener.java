@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSON;
 import com.github.wangjin.simpletaskscheduler.annotation.TaskHandler;
 import com.github.wangjin.simpletaskscheduler.entity.TaskScheduler;
 import com.github.wangjin.simpletaskscheduler.handler.ITaskHandler;
+import com.github.wangjin.simpletaskscheduler.init.InitUtil;
 import com.github.wangjin.simpletaskscheduler.runnable.TaskRunnable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -22,13 +23,17 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.util.ObjectUtils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.wangjin.simpletaskscheduler.constant.Constants.SECONDS_PER_MINUTE;
 import static com.github.wangjin.simpletaskscheduler.constant.Constants.THEAD_POOL_POST;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -66,6 +71,7 @@ public class TaskSchedulerListener implements MessageListener {
                 log.debug("关闭线程池[{}]", theadPoolName);
                 // 找到并关闭对应线程池
                 ThreadPoolTaskScheduler threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
+                threadPoolTaskScheduler.setWaitForTasksToCompleteOnShutdown(false);
                 threadPoolTaskScheduler.shutdown();
                 ((BeanDefinitionRegistry) applicationContext.getBeanFactory()).removeBeanDefinition(theadPoolName);
             } else if (TASK_ACTION_START.equalsIgnoreCase(taskScheduler.getAction())) {
@@ -82,13 +88,25 @@ public class TaskSchedulerListener implements MessageListener {
                 Map<String, Object> beansWithAnnotation = applicationContext.getBeansWithAnnotation(TaskHandler.class);
                 if (!beansWithAnnotation.isEmpty()) {
                     if (singleNode) {
-                        String lockName = TASK_PRE + taskScheduler.getId() + ":" + taskScheduler.getRandomId();
+                        String randomId = taskScheduler.getRandomId();
+                        int lockSeconds = 10;
+                        if (ObjectUtils.isEmpty(randomId)) {
+                            // randomId为空即为自动启动任务，防止重复执行，延迟锁时间
+                            randomId = "SINGLE_NODE_ID";
+                            lockSeconds = 120;
+                            LocalDateTime initTIme = InitUtil.getInitTIme();
+                            // 初始化时间大于120秒
+                            if (isEmpty(initTIme) || Duration.between(initTIme, LocalDateTime.now()).toMinutes() * SECONDS_PER_MINUTE > lockSeconds) {
+                                return;
+                            }
+                        }
+                        String lockName = TASK_PRE + taskScheduler.getId() + ":" + randomId;
                         Long increment = stringRedisTemplate.opsForValue().increment(lockName);
-                        stringRedisTemplate.expire(lockName, 5, TimeUnit.SECONDS);
+                        stringRedisTemplate.expire(lockName, lockSeconds, TimeUnit.SECONDS);
                         if (increment == null || increment != 1) {
                             // 未获得锁则跳过后续执行
                             try {
-                                log.debug("当前节点[{}]未竞争到单节点锁，结束调度", InetAddress.getLocalHost().getHostName());
+                                log.warn("当前节点[{}]未竞争到单节点锁，结束调度[{}]", InetAddress.getLocalHost().getHostName(), taskScheduler.getName());
                             } catch (UnknownHostException e) {
                                 log.error("获取hostname失败", e);
                             }
@@ -107,6 +125,12 @@ public class TaskSchedulerListener implements MessageListener {
                             BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) applicationContext.getBeanFactory();
                             beanFactory.registerBeanDefinition(theadPoolName, rawBeanDefinition);
                             threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
+
+                        }
+
+                        // 当前线程池中已经有线程则不提交新任务
+                        if (threadPoolTaskScheduler.getActiveCount() > 0) {
+                            return;
                         }
 
                         if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() == 1) {
