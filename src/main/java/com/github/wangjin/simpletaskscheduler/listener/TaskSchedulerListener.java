@@ -6,12 +6,13 @@ package com.github.wangjin.simpletaskscheduler.listener;
  * @date 2019-11-07 5:55 下午
  */
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wangjin.simpletaskscheduler.annotation.TaskHandler;
 import com.github.wangjin.simpletaskscheduler.entity.TaskScheduler;
 import com.github.wangjin.simpletaskscheduler.handler.ITaskHandler;
 import com.github.wangjin.simpletaskscheduler.init.InitUtil;
 import com.github.wangjin.simpletaskscheduler.runnable.TaskRunnable;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
@@ -58,11 +59,12 @@ public class TaskSchedulerListener implements MessageListener {
         this.executorName = executorName;
     }
 
+    @SneakyThrows
     @Override
     public void onMessage(Message message, byte[] pattern) {
         if (!isEmpty(message.getBody())) {
             //构建taskScheduler对象
-            TaskScheduler taskScheduler = JSON.parseObject(new String(message.getBody(), StandardCharsets.UTF_8), TaskScheduler.class);
+            TaskScheduler taskScheduler = new ObjectMapper().readValue(message.getBody(), TaskScheduler.class);
 
             // 对应调度线程池名称
             String theadPoolName = taskScheduler.getHandlerName() + THEAD_POOL_POST;
