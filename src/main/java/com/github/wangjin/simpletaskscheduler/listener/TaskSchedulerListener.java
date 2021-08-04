@@ -46,9 +46,9 @@ public class TaskSchedulerListener implements MessageListener {
     private static final String TASK_PRE = "TASK-";
     private static final String TASK_ACTION_START = "start";
     private static final String TASK_ACTION_STOP = "stop";
-    private ConfigurableApplicationContext applicationContext;
-    private StringRedisTemplate stringRedisTemplate;
-    private String executorName;
+    private final ConfigurableApplicationContext applicationContext;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final String executorName;
 
     public TaskSchedulerListener(ConfigurableApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate, String executorName) {
         this.applicationContext = applicationContext;
