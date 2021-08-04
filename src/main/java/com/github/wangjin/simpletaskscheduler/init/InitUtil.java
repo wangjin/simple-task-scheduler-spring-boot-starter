@@ -20,7 +20,7 @@ public class InitUtil {
         Constants.paramsMap.put(INIT_TIME, LocalDateTime.now());
     }
 
-    public static LocalDateTime getInitTIme() {
+    public static LocalDateTime getInitTime() {
         return (LocalDateTime) Constants.paramsMap.get(INIT_TIME);
     }
 }
