@@ -26,12 +26,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.ObjectUtils;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.wangjin.simpletaskscheduler.constant.Constants.SECONDS_PER_MINUTE;
@@ -42,16 +43,12 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 public class TaskSchedulerListener implements MessageListener {
 
     private static final Byte FIXED_DELAY = 2;
-
-    private ConfigurableApplicationContext applicationContext;
-
-    private StringRedisTemplate stringRedisTemplate;
-
-    private String executorName;
-
     private static final String TASK_PRE = "TASK-";
     private static final String TASK_ACTION_START = "start";
     private static final String TASK_ACTION_STOP = "stop";
+    private ConfigurableApplicationContext applicationContext;
+    private StringRedisTemplate stringRedisTemplate;
+    private String executorName;
 
     public TaskSchedulerListener(ConfigurableApplicationContext applicationContext, StringRedisTemplate stringRedisTemplate, String executorName) {
         this.applicationContext = applicationContext;
@@ -62,9 +59,16 @@ public class TaskSchedulerListener implements MessageListener {
     @SneakyThrows
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        if (!isEmpty(message.getBody())) {
+
+        Optional.of(message.getBody()).ifPresent(msg -> {
             //构建taskScheduler对象
-            TaskScheduler taskScheduler = new ObjectMapper().readValue(message.getBody(), TaskScheduler.class);
+            TaskScheduler taskScheduler;
+            try {
+                taskScheduler = new ObjectMapper().readValue(message.getBody(), TaskScheduler.class);
+            } catch (IOException e) {
+                log.error("JSON解析失败", e);
+                return;
+            }
 
             // 对应调度线程池名称
             String theadPoolName = taskScheduler.getHandlerName() + THEAD_POOL_POST;
@@ -96,9 +100,9 @@ public class TaskSchedulerListener implements MessageListener {
                             // randomId为空即为自动启动任务，防止重复执行，延迟锁时间
                             randomId = "SINGLE_NODE_ID";
                             lockSeconds = 120;
-                            LocalDateTime initTIme = InitUtil.getInitTIme();
+                            LocalDateTime initTime = InitUtil.getInitTime();
                             // 初始化时间大于120秒
-                            if (isEmpty(initTIme) || Duration.between(initTIme, LocalDateTime.now()).toMinutes() * SECONDS_PER_MINUTE > lockSeconds) {
+                            if (isEmpty(initTime) || Duration.between(initTime, LocalDateTime.now()).toMinutes() * SECONDS_PER_MINUTE > lockSeconds) {
                                 return;
                             }
                         }
@@ -115,38 +119,50 @@ public class TaskSchedulerListener implements MessageListener {
                             return;
                         }
                     }
-                    ITaskHandler iTaskHandler = (ITaskHandler) beansWithAnnotation.get(taskScheduler.getHandlerName());
-                    if (iTaskHandler != null) {
-
-                        ThreadPoolTaskScheduler threadPoolTaskScheduler;
-                        try {
-                            threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
-                        } catch (NoSuchBeanDefinitionException e) {
-                            // Bean不存在
-                            AbstractBeanDefinition rawBeanDefinition = BeanDefinitionBuilder.genericBeanDefinition(ThreadPoolTaskScheduler.class).getRawBeanDefinition();
-                            BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) applicationContext.getBeanFactory();
-                            beanFactory.registerBeanDefinition(theadPoolName, rawBeanDefinition);
-                            threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
-
-                        }
-
-                        // 当前线程池中已经有线程则不提交新任务
-                        if (threadPoolTaskScheduler.getActiveCount() > 0) {
-                            return;
-                        }
-
-                        if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() == 1) {
-                            // 单次执行
-                            threadPoolTaskScheduler.submit(new TaskRunnable(iTaskHandler, taskScheduler.getParams()));
-                        } else if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
-                            // 基于FIXED DELAY执行
-                            threadPoolTaskScheduler.scheduleWithFixedDelay(new TaskRunnable(iTaskHandler, taskScheduler.getParams()), Long.parseLong(taskScheduler.getCronExpressionOrFixedDelay()));
-                        } else {
-                            // 基于CRON表达式执行
-                            threadPoolTaskScheduler.schedule(new TaskRunnable(iTaskHandler, taskScheduler.getParams()), new CronTrigger(taskScheduler.getCronExpressionOrFixedDelay()));
-                        }
-                    }
+                    runTask(taskScheduler, theadPoolName, beansWithAnnotation);
                 }
+            }
+
+        });
+    }
+
+    /**
+     * 运行任务
+     *
+     * @param taskScheduler       任务调度器
+     * @param theadPoolName       线程池名称
+     * @param beansWithAnnotation 注解
+     */
+    private void runTask(TaskScheduler taskScheduler, String theadPoolName, Map<String, Object> beansWithAnnotation) {
+        ITaskHandler iTaskHandler = (ITaskHandler) beansWithAnnotation.get(taskScheduler.getHandlerName());
+        if (iTaskHandler != null) {
+
+            ThreadPoolTaskScheduler threadPoolTaskScheduler;
+            try {
+                threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
+            } catch (NoSuchBeanDefinitionException e) {
+                // Bean不存在
+                AbstractBeanDefinition rawBeanDefinition = BeanDefinitionBuilder.genericBeanDefinition(ThreadPoolTaskScheduler.class).getRawBeanDefinition();
+                BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) applicationContext.getBeanFactory();
+                beanFactory.registerBeanDefinition(theadPoolName, rawBeanDefinition);
+                threadPoolTaskScheduler = applicationContext.getBean(theadPoolName, ThreadPoolTaskScheduler.class);
+
+            }
+
+            // 当前线程池中已经有线程则不提交新任务
+            if (threadPoolTaskScheduler.getActiveCount() > 0) {
+                return;
+            }
+
+            if (taskScheduler.getIsOnlyExecuteOnce() != null && taskScheduler.getIsOnlyExecuteOnce() == 1) {
+                // 单次执行
+                threadPoolTaskScheduler.submit(new TaskRunnable(iTaskHandler, taskScheduler.getParams()));
+            } else if (FIXED_DELAY.equals(taskScheduler.getScheduleType())) {
+                // 基于FIXED DELAY执行
+                threadPoolTaskScheduler.scheduleWithFixedDelay(new TaskRunnable(iTaskHandler, taskScheduler.getParams()), Long.parseLong(taskScheduler.getCronExpressionOrFixedDelay()));
+            } else {
+                // 基于CRON表达式执行
+                threadPoolTaskScheduler.schedule(new TaskRunnable(iTaskHandler, taskScheduler.getParams()), new CronTrigger(taskScheduler.getCronExpressionOrFixedDelay()));
             }
         }
     }
