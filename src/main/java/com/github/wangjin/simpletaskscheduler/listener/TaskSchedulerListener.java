@@ -56,7 +56,6 @@ public class TaskSchedulerListener implements MessageListener {
         this.executorName = executorName;
     }
 
-    @SneakyThrows
     @Override
     public void onMessage(Message message, byte[] pattern) {
 
