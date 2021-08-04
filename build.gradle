@@ -7,28 +7,8 @@ buildscript {
     repositories {
 
         maven {
-            credentials {
-                username 'mrQHCf'
-                password 'qjD2qwR1CM'
-            }
-            url 'https://repo.rdc.aliyun.com/repository/81055-release-l7Tutl/'
+            url 'https://maven.aliyun.com/repository/public'
         }
-        maven {
-            credentials {
-                username 'mrQHCf'
-                password 'qjD2qwR1CM'
-            }
-            url 'https://repo.rdc.aliyun.com/repository/81055-snapshot-ikhbYQ/'
-        }
-
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-
-    dependencies {
-        classpath 'com.hongyue.parent.plugin:hongyue-parent-plugin:1.0.0-SNAPSHOT'
-        classpath "io.spring.gradle:dependency-management-plugin:1.0.8.RELEASE"
     }
 }
 
@@ -39,11 +19,10 @@ plugins {
 }
 
 group = 'com.github.wangjin'
-version = '1.0.0-SNAPSHOT'
+version = '1.0.1'
 sourceCompatibility = '1.8'
 
 apply plugin: "io.spring.dependency-management"
-apply plugin: 'com.hongyue.parent'
 
 dependencies {
 
@@ -57,13 +36,6 @@ dependencies {
 
 test {
     useJUnitPlatform()
-}
-
-ext {
-    setProperty('snapshotUrl', 'https://repo.rdc.aliyun.com/repository/81055-snapshot-ikhbYQ/')
-    setProperty('releaseUrl', 'https://repo.rdc.aliyun.com/repository/81055-release-l7Tutl/')
-    setProperty('mavenUsername', 'mrQHCf')
-    setProperty('mavenPassword', 'qjD2qwR1CM')
 }
 
 repositories {
@@ -81,13 +53,6 @@ repositories {
     maven {
         url 'https://maven.aliyun.com/repository/public'
     }
-    maven {
-        credentials {
-            username "${mavenUsername}"
-            password "${mavenPassword}"
-        }
-        url = version.endsWith('SNAPSHOT') ? "${snapshotUrl}" : "${releaseUrl}"
-    }
 }
 
 jar {
@@ -103,14 +68,6 @@ publishing {
 
     repositories {
         mavenLocal()
-
-        maven {
-            credentials {
-                username "${mavenUsername}"
-                password "${mavenPassword}"
-            }
-            url = version.endsWith('SNAPSHOT') ? "${snapshotUrl}" : "${releaseUrl}"
-        }
     }
 
     publications {
