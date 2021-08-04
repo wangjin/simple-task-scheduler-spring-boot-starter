@@ -13,6 +13,9 @@ import static com.github.wangjin.simpletaskscheduler.constant.Constants.INIT_TIM
  */
 public class InitUtil {
 
+    private InitUtil() {
+    }
+
     public static void setInitTime() {
         Constants.paramsMap.put(INIT_TIME, LocalDateTime.now());
     }
