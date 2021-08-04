@@ -13,11 +13,14 @@ import static com.github.wangjin.simpletaskscheduler.constant.Constants.INIT_TIM
  */
 public class InitUtil {
 
+    private InitUtil() {
+    }
+
     public static void setInitTime() {
         Constants.paramsMap.put(INIT_TIME, LocalDateTime.now());
     }
 
-    public static LocalDateTime getInitTIme() {
+    public static LocalDateTime getInitTime() {
         return (LocalDateTime) Constants.paramsMap.get(INIT_TIME);
     }
 }
